@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C Programming Quiz</title>
+<style>
+[hidden]{display:none!important}
+body{margin:0;background:#f4f4f4;color:#222;font-family:Arial,sans-serif;line-height:1.5}
+header{background:#b5121b;color:#fff;padding:14px 20px}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:2px 0 0;font-size:.9rem}
+main{max-width:600px;margin:20px auto;padding:0 16px}
+.box{background:#fff;border:1px solid #ddd;border-radius:6px;padding:20px}
+input{width:100%;padding:10px;margin:8px 0;border:1px solid #bbb;border-radius:4px;font-size:1rem;box-sizing:border-box}
+button{display:block;width:100%;margin:8px 0;padding:10px;border:1px solid #bbb;border-radius:4px;background:#fff;font-size:1rem;text-align:left;cursor:pointer}
+button.main{background:#b5121b;border-color:#b5121b;color:#fff;text-align:center}
+button.right{background:#d9f2e0;border-color:#2e8b4a}
+button.wrong{background:#fbdcdc;border-color:#b5121b}
+.small{color:#666;font-size:.9rem}
+#fb{font-weight:bold;min-height:1.5em}
+table{border-collapse:collapse;width:100%;margin:10px 0}
+td{padding:6px 4px;border-bottom:1px solid #eee}
+td:last-child{text-align:right;font-weight:bold}
+footer{max-width:600px;margin:0 auto 30px;padding:0 16px;color:#666;font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>C Programming Quiz</h1>
+  <p>20 questions, 1 mark each</p>
+</header>
+
+<main>
+  <div class="box" id="start">
+    <p>Enter your name and press Start.</p>
+    <input id="name" placeholder="Your name" maxlength="49">
+    <p id="err" style="color:#b5121b;margin:0"></p>
+    <button class="main" onclick="start()">Start Quiz</button>
+  </div>
+
+  <div class="box" id="quiz" hidden>
+    <p class="small" id="qno"></p>
+    <h3 id="qtext"></h3>
+    <div id="opts"></div>
+    <p id="fb"></p>
+    <button class="main" id="next" onclick="next()" hidden>Next</button>
+  </div>
+
+  <div class="box" id="result" hidden>
+    <h2>Result</h2>
+    <table id="table"></table>
+    <button class="main" onclick="show('start')">Take the quiz again</button>
+    <h3>Previous scores on this device</h3>
+    <div id="old" class="small"></div>
+  </div>
+</main>
+
+<footer>Mini project for C Programming. Your scores are saved in this browser, like scores.txt in the C program.</footer>
+
+<script>
+// each question: [question, [options a-d], index of the correct option]
+const Q = [
+  ["Which symbol ends a statement in C?", [".", ";", ":", ","], 1],
+  ["Which header file is needed for printf()?", ["stdlib.h", "string.h", "stdio.h", "math.h"], 2],
+  ["Size of int on most computers (in bytes)?", ["1", "2", "4", "8"], 2],
+  ["Which is a valid variable name?", ["2num", "my-var", "int", "my_var"], 3],
+  ["Format specifier used to print a float?", ["%d", "%f", "%c", "%s"], 1],
+  ["What is the value of 10 % 3?", ["1", "3", "0", "3.33"], 0],
+  ["Which loop runs at least once?", ["for", "while", "do-while", "none"], 2],
+  ["Which keyword leaves a loop immediately?", ["stop", "exit", "break", "end"], 2],
+  ["Array index starts from?", ["1", "0", "-1", "2"], 1],
+  ["Which function finds the length of a string?", ["strcpy", "strlen", "strcat", "strcmp"], 1],
+  ["Which operator gives the address of a variable?", ["*", "#", "&", "@"], 2],
+  ["Which function allocates memory dynamically?", ["free", "printf", "malloc", "scanf"], 2],
+  ["A function that calls itself is called?", ["Loop", "Recursion", "Array", "Structure"], 1],
+  ["Which keyword is used to create a structure?", ["class", "record", "struct", "object"], 2],
+  ["Which function opens a file?", ["fclose", "fread", "fopen", "fwrite"], 2],
+  ["Which mode opens a file for reading?", ["\"w\"", "\"a\"", "\"x\"", "\"r\""], 3],
+  ["Which function closes a file?", ["fprintf", "fopen", "fscanf", "fclose"], 3],
+  ["What is the value of 5 / 2 for integers?", ["2.5", "3", "2", "2.0"], 2],
+  ["Which statement chooses between many cases?", ["if", "for", "goto", "switch"], 3],
+  ["What does return 0; in main() mean?", ["Error", "Program ended successfully", "Infinite loop", "Nothing"], 1]
+];
+let i = 0, score = 0, name = "";
+const $ = id => document.getElementById(id);
+
+function show(id) {
+  ["start", "quiz", "result"].forEach(x => $(x).hidden = (x !== id));
+}
+
+function start() {
+  name = $("name").value.trim();
+  if (name === "") { $("err").textContent = "Please enter your name."; return; }
+  $("err").textContent = "";
+  i = 0; score = 0;
+  show("quiz");
+  ask();
+}
+
+function ask() {
+  $("qno").textContent = "Question " + (i + 1) + " of " + Q.length;
+  $("qtext").textContent = Q[i][0];
+  $("fb").textContent = "";
+  $("next").hidden = true;
+  $("opts").innerHTML = "";
+  Q[i][1].forEach((text, k) => {
+    const b = document.createElement("button");
+    b.textContent = "abcd"[k] + ") " + text;
+    b.onclick = () => pick(k);
+    $("opts").appendChild(b);
+  });
+}
+
+function pick(k) {
+  const buttons = $("opts").children;
+  const correct = Q[i][2];
+  for (const b of buttons) b.disabled = true;
+  buttons[correct].className = "right";
+  if (k === correct) {
+    score++;
+    $("fb").textContent = "Correct!";
+  } else {
+    buttons[k].className = "wrong";
+    $("fb").textContent = "Wrong. The correct answer is " + "abcd"[correct] + ".";
+  }
+  $("next").textContent = (i === Q.length - 1) ? "See result" : "Next";
+  $("next").hidden = false;
+}
+
+function next() {
+  i++;
+  if (i < Q.length) ask(); else finish();
+}
+
+function finish() {
+  const total = Q.length;
+  const percent = score * 100 / total;
+  let remark = "Needs more practice";
+  if (percent >= 80) remark = "Excellent";
+  else if (percent >= 50) remark = "Good";
+
+  const rows = [["Name", name], ["Correct", score], ["Wrong", total - score],
+                ["Marks", score + " out of " + total],
+                ["Percentage", percent.toFixed(2) + "%"], ["Remark", remark]];
+  $("table").innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td></td><td></td>";
+    tr.children[0].textContent = r[0];
+    tr.children[1].textContent = r[1];
+    $("table").appendChild(tr);
+  });
+
+  // save the score in the browser (like scores.txt in the C program)
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("quiz-scores")) || []; } catch (e) {}
+  list.push(name + " - " + score + "/" + total + " (" + percent.toFixed(2) + "%)");
+  try { localStorage.setItem("quiz-scores", JSON.stringify(list)); } catch (e) {}
+
+  $("old").innerHTML = "";
+  list.slice(-5).reverse().forEach(t => {
+    const d = document.createElement("div");
+    d.textContent = t;
+    $("old").appendChild(d);
+  });
+  show("result");
+}
+</script>
+</body>
+</html>
